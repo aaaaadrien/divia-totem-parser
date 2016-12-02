@@ -17,11 +17,10 @@ use HTTP::Request;
 #Granville : arret=666_89
 #Europe : arret=1498_185
 
-my $ligne = 89;
-my $arret = 666;
 
-our $l; #ARG -l = list lines
-our $a; #ARG -a = list arrets
+our $l; #ARG -lignes = list lines
+our $a; #ARG -arrets = list bus stop 
+our $h; #ARG -h = help
 
 my $relation;
 my $url;
@@ -30,7 +29,20 @@ my $useragent;
 my $response;
 my @tmp;
 
-if ( $l eq 1 ) 
+
+if ( defined  $h && $h eq 1 ) 
+{
+	print "Utilisation : divia-totem-parser.pl [OPTION]... \n";
+	print "Afficher des renseignements sur les lignes, les arrêts et les prochains passages des bus et tram DIVIA\n\n";
+	print "\t-l\tLister toutes les lignes disponibles\n";
+	print "\t-a=ID\tListes tous les arrêts pour une ligne définie selon son ID (listé par -l)\n";
+	print "\t-l=LIGNE -a=ARRET\tCode de l'arrêt d'une ligne pour lesquels trouver les prochains passages (Les 2 sont requis)\n";
+
+	exit;
+}
+
+
+if ( defined  $l && $l eq 1 && !defined $a ) 
 {
 	$url = "https://www.divia.fr/totem/recherche";	
 	$ua = LWP::UserAgent->new(agent => $useragent, ssl_opts => { verify_hostname => 0 });
@@ -99,50 +111,108 @@ if ( $l eq 1 )
 
 
 
+if ( defined  $a && $a =~ /^\d+$/ && !defined $l ) 
+{
+	$url = "https://www.divia.fr/totem/appli_resultat/ligne/$a";	
+	$ua = LWP::UserAgent->new(agent => $useragent, ssl_opts => { verify_hostname => 0 });
+	$response = $ua->get($url);
 
+	if ($response->is_success) {
+		my @html = split qr/\R/, $response->decoded_content;
+		my $ok = 0;
+		my $data_line;
 
-
-
-
-$relation = $arret."_".$ligne;
-$url="https://www.divia.fr/totem/appli_resultat/ligne/$ligne/arret/$relation/";
-$ua = LWP::UserAgent->new(agent => $useragent, ssl_opts => { verify_hostname => 0 });
-$response = $ua->get($url);
-
-
-if ($response->is_success) {
-	#print $response->decoded_content;
-	
-	my @html = split qr/\R/, $response->decoded_content;
-	my $pass1;
-	my $pass2;
-
-	foreach (@html)
-	{
-		if ($_ =~ /picto-bus|time1/) 
+		foreach (@html)
 		{
-			if ($_ =~ /picto-bus/)
+			if ( $ok eq 1 )	
 			{
-				$pass1="BUS";
+				if ( $_ =~ /title/ )
+				{
+					$data_line="";
+					
+					@tmp = split qr/>|</, $_;
+					$data_line = $tmp[1];
+				}
+
+				if ( $_ =~ /code-totem/ )
+				{
+					@tmp = split qr/>|</, $_;
+					$data_line = $tmp[2]." : ".$data_line;
+					print $data_line."\n";
+				}
 			}
 			else
 			{
-				@tmp = split qr/"/, $_;
-				$pass1 = $tmp[3];
+				if ($_ =~ /panel-totem-active/)
+				{
+					$ok=1;
+				}
 			}
+
+
 		}
-		if ($_ =~ /time2/)
-		{
-			#print "$_\n";
-			@tmp = split qr/"/, $_;
-			$pass2 = $tmp[3];
-		}
+
+	}
+	else
+	{
+		print "Erreur TOTEM : $response->status_line \n";
 	}
 
 
-	print "Prochains Passages : $pass1 - $pass2\n";
+	exit; #Moche, a changer
 }
-else
+
+
+
+
+
+
+if ( defined $l && defined $a && $l =~ /^\d+$/ && $a =~ /^\d+$/) 
 {
-	print "Erreur TOTEM : $response->status_line \n";
+
+	my $ligne = $l;
+	my $arret = $a;
+	
+	$relation = $arret."_".$ligne;
+	$url="https://www.divia.fr/totem/appli_resultat/ligne/$ligne/arret/$relation/";
+	$ua = LWP::UserAgent->new(agent => $useragent, ssl_opts => { verify_hostname => 0 });
+	$response = $ua->get($url);
+
+
+	if ($response->is_success) {
+		#print $response->decoded_content;
+	
+		my @html = split qr/\R/, $response->decoded_content;
+		my $pass1;
+		my $pass2;
+
+		foreach (@html)
+		{
+			if ($_ =~ /picto-bus|time1/) 
+			{
+				if ($_ =~ /picto-bus/)
+				{
+					$pass1="BUS";
+				}
+				else
+				{
+					@tmp = split qr/"/, $_;
+					$pass1 = $tmp[3];
+				}
+			}
+			if ($_ =~ /time2/)
+			{
+				#print "$_\n";
+				@tmp = split qr/"/, $_;
+				$pass2 = $tmp[3];
+			}
+		}
+
+		print "Prochains Passages : $pass1 - $pass2\n";
+	}
+	else
+	{
+		print "Erreur TOTEM : $response->status_line \n";
+	}
+	exit;
 }
