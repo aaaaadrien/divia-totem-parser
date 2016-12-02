@@ -8,6 +8,7 @@ use strict;
 use warnings;
 
 use utf8;
+use Encode qw(encode decode);
 
 use Net::SSLeay; 
 use LWP::UserAgent;
@@ -78,7 +79,7 @@ if ( defined  $l && $l eq 1 && !defined $a )
 				if ( $_ =~ /data-type/ )
 				{
 					@tmp = split qr/>|</, $_;
-					$data_line = $data_line.$tmp[2];
+					$data_line = $data_line.encode( 'utf-8' , $tmp[2]); #A mettre dans une fonction genre txt() + remplacer les "&#039;" par ' 
 
 					print $data_line."\n";
 				}
