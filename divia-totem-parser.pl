@@ -3,26 +3,33 @@
 # une quelconque violation des droits d'utilisation n'est pas volontaire
 # Merci de votre comprehension. Adrien_D
 
+#Tests 
+#Granville : -l=89 -a=666
+#Europe : -l=185 -a=1498 
 
+# USE for better code
 use strict;
 use warnings;
 
+# USE for encodings
 use utf8;
 use Encode qw(encode decode);
 
+# USE Modules
 use Net::SSLeay; 
 use LWP::UserAgent;
 use LWP::Protocol::https;
 use HTTP::Request;
 
-#Granville : arret=666_89
-#Europe : arret=1498_185
-
-
+# VARS in args (perl -s required)
 our $l; #ARG -lignes = list lines
 our $a; #ARG -arrets = list bus stop 
 our $h; #ARG -h = help
 
+# VAR total args
+my $args = $ARGV[0];
+
+# VARS in the script
 my $relation;
 my $url;
 my $ua;
@@ -31,14 +38,35 @@ my $response;
 my @tmp;
 
 
-if ( defined  $h && $h eq 1 ) 
-{
-	print "Utilisation : divia-totem-parser.pl [OPTION]... \n";
+# FUNCTIONS
+sub help(){
+	print "Utilisation : divia-totem-parser.pl [OPTION]... \n";
 	print "Afficher des renseignements sur les lignes, les arrêts et les prochains passages des bus et tram DIVIA\n\n";
-	print "\t-l\tLister toutes les lignes disponibles\n";
-	print "\t-a=ID\tListes tous les arrêts pour une ligne définie selon son ID (listé par -l)\n";
+	print "\t-l\t\t\tLister toutes les lignes disponibles\n";
+	print "\t-a=ID\t\t\tListes tous les arrêts pour une ligne définie selon son ID (listé par -l)\n";
 	print "\t-l=LIGNE -a=ARRET\tCode de l'arrêt d'une ligne pour lesquels trouver les prochains passages (Les 2 sont requis)\n";
+}
 
+sub txt() {
+	my $txt = $_[0];
+
+	$txt = encode( 'utf-8' , $txt);
+	$txt =~ s/&#039;/'/;
+	
+	return $txt;
+}
+
+
+# SCRIPT
+
+if ( defined  $h and $h eq 1 ) 
+{
+	&help;
+	exit;
+}
+if ( (!defined $h and !defined $a and !defined $l) or ( defined $args and $args eq "--help" ) )
+{
+	&help;
 	exit;
 }
 
@@ -64,49 +92,43 @@ if ( defined  $l && $l eq 1 && !defined $a )
 				if ( $_ =~ /value/ )
 				{
 					$data_line="";
-					
 					@tmp = split qr/"/, $_;
-					$data_line = $tmp[1]." - ";
+					$data_line = &txt($tmp[1])." - ";
 				}
 
 				if ( $_ =~ /data-class/ )
 				{
 					@tmp = split qr/"/, $_;
 					$tmp[1] =~ s/ perturb//g;
-					$data_line = $data_line.$tmp[1]." : ";
+					$data_line = $data_line.&txt($tmp[1])." : ";
 				}
 				
 				if ( $_ =~ /data-type/ )
 				{
 					@tmp = split qr/>|</, $_;
-					$data_line = $data_line.encode( 'utf-8' , $tmp[2]); #A mettre dans une fonction genre txt() + remplacer les "&#039;" par ' 
+					$data_line = $data_line.&txt($tmp[2]); #A mettre dans une fonction genre txt() + remplacer les "&#039;" par ' 
 
 					print $data_line."\n";
 				}
 
-
-
-				if ( $_ =~ /\/select/ )
+				if ( $_ =~ /\/select/ ) #To skip tests after select list
 				{
 					$ok=0;
 				}
 			}
 			else
 			{
-				if ($_ =~ /form_totem_home_search_ligne/)
+				if ($_ =~ /form_totem_home_search_ligne/) #To skip tests for website header
 				{
 					$ok=1;
 				}
 			}
 		}
-
 	}
 	else
 	{
 		print "Erreur TOTEM : $response->status_line \n";
 	}
-
-
 	exit; #Moche, a changer
 }
 
@@ -130,15 +152,14 @@ if ( defined  $a && $a =~ /^\d+$/ && !defined $l )
 				if ( $_ =~ /title/ )
 				{
 					$data_line="";
-					
 					@tmp = split qr/>|</, $_;
-					$data_line = $tmp[1];
+					$data_line = &txt($tmp[1]);
 				}
 
 				if ( $_ =~ /code-totem/ )
 				{
 					@tmp = split qr/>|</, $_;
-					$data_line = $tmp[2]." : ".$data_line;
+					$data_line = &txt($tmp[2])." : ".$data_line;
 					print $data_line."\n";
 				}
 			}
@@ -149,22 +170,14 @@ if ( defined  $a && $a =~ /^\d+$/ && !defined $l )
 					$ok=1;
 				}
 			}
-
-
 		}
-
 	}
 	else
 	{
 		print "Erreur TOTEM : $response->status_line \n";
 	}
-
-
 	exit; #Moche, a changer
 }
-
-
-
 
 
 
@@ -179,7 +192,6 @@ if ( defined $l && defined $a && $l =~ /^\d+$/ && $a =~ /^\d+$/)
 	$ua = LWP::UserAgent->new(agent => $useragent, ssl_opts => { verify_hostname => 0 });
 	$response = $ua->get($url);
 
-
 	if ($response->is_success) {
 		#print $response->decoded_content;
 	
@@ -193,22 +205,21 @@ if ( defined $l && defined $a && $l =~ /^\d+$/ && $a =~ /^\d+$/)
 			{
 				if ($_ =~ /picto-bus/)
 				{
-					$pass1="BUS";
+					$pass1=0;
 				}
 				else
 				{
 					@tmp = split qr/"/, $_;
-					$pass1 = $tmp[3];
+					$pass1 = &txt($tmp[3]);
 				}
 			}
 			if ($_ =~ /time2/)
 			{
 				#print "$_\n";
 				@tmp = split qr/"/, $_;
-				$pass2 = $tmp[3];
+				$pass2 = &txt($tmp[3]);
 			}
 		}
-
 		print "Prochains Passages : $pass1 - $pass2\n";
 	}
 	else
