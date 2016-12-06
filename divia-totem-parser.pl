@@ -21,6 +21,9 @@ use LWP::UserAgent;
 use LWP::Protocol::https;
 use HTTP::Request;
 
+#VAR Detect OS :
+my $os = $^O;
+
 # VARS in args (perl -s required)
 our $l; #ARG -lignes = list lines
 our $a; #ARG -arrets = list bus stop 
@@ -50,8 +53,16 @@ sub help(){
 sub txt() {
 	my $txt = $_[0];
 
-	$txt = encode( 'utf-8' , $txt);
+	if ( $os eq "MSWin32")
+	{
+		$txt = encode( 'cp437' , $txt);
+	}
+	else
+	{
+		$txt = encode( 'utf-8' , $txt);
+	}
 	$txt =~ s/&#039;/'/;
+	$txt =~ s/&gt;/:/;
 	
 	return $txt;
 }
@@ -196,11 +207,32 @@ if ( defined $l && defined $a && $l =~ /^\d+$/ && $a =~ /^\d+$/)
 		#print $response->decoded_content;
 	
 		my @html = split qr/\R/, $response->decoded_content;
-		my $pass1;
-		my $pass2;
+		my $stop = "";
+		my $line = "";
+		my $dest = "";
+		my $pass1 = "";
+		my $pass2 = "";
 
 		foreach (@html)
 		{
+			if ( $_ =~ /<div class="title">/ )
+			{
+				@tmp = split qr/>|</, $_;
+				$stop = &txt($tmp[2]);
+			}
+			
+			if ( $_ =~ /class="item"/ )
+			{
+				@tmp = split qr/"/, $_;
+				$line = &txt($tmp[3]);
+			}
+			
+			if ( $_ =~ /v-align/ )
+			{
+				@tmp = split qr/>|</, $_;
+				$dest = &txt($tmp[2]);
+			}
+				
 			if ($_ =~ /picto-bus|time1/) 
 			{
 				if ($_ =~ /picto-bus/)
@@ -220,7 +252,7 @@ if ( defined $l && defined $a && $l =~ /^\d+$/ && $a =~ /^\d+$/)
 				$pass2 = &txt($tmp[3]);
 			}
 		}
-		print "Prochains Passages : $pass1 - $pass2\n";
+		print "Prochains passages à $stop ($line $dest) : $pass1 - $pass2\n";
 	}
 	else
 	{
