@@ -252,7 +252,8 @@ if ( defined $l && defined $a && $l =~ /^\d+$/ && $a =~ /^\d+$/)
 				$pass2 = &txt($tmp[3]);
 			}
 		}
-		print "Prochains passages à $stop ($line $dest) : $pass1 - $pass2\n";
+		print "$stop ($line $dest) : $pass1 - $pass2\n";
+		
 	}
 	else
 	{
