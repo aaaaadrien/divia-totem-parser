@@ -233,7 +233,7 @@ if ( defined $l && defined $a && $l =~ /^\d+$/ && $a =~ /^\d+$/)
 				$dest = &txt($tmp[2]);
 			}
 				
-			if ($_ =~ /picto-bus|time1/) 
+			if ($_ =~ /picto-bus|picto-tram|time1/) 
 			{
 				if ($_ =~ /picto-bus|picto-tram/)
 				{
