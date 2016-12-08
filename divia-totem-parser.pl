@@ -235,7 +235,7 @@ if ( defined $l && defined $a && $l =~ /^\d+$/ && $a =~ /^\d+$/)
 				
 			if ($_ =~ /picto-bus|time1/) 
 			{
-				if ($_ =~ /picto-bus/)
+				if ($_ =~ /picto-bus|picto-tram/)
 				{
 					$pass1=0;
 				}
