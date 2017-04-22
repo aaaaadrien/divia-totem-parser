@@ -6,3 +6,5 @@ Les URL des "API" TOTEM sont l'oeuvre de rétro-ingénierie de ma part. Une quel
 Merci de votre comprehension. Adrien_D
 
 ![Alt text](https://raw.githubusercontent.com/aaaaadrien/divia-totem-parser/master/img_divia-totem-parser.png "divia-totem-parser")!
+
+Pour réinstaller les modules via CPAN : cpan -fi Net::SSLeay LWP::UserAgent LWP::Protocol::https HTTP::Request
