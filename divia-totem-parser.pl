@@ -242,7 +242,13 @@ if ( defined $l && defined $a && $l =~ /^\d+$/ && $a =~ /^\d+$/)
 				else
 				{
 					@tmp = split qr/"/, $_;
-					$pass1 = &txt($tmp[3]);
+					if ( length($tmp[3])) {
+						$pass1 = &txt($tmp[3]);
+					}
+					else
+					{
+						$pass1 = &txt("X");
+					}
 				}
 			}
 			if ($_ =~ /time2/)
