@@ -247,7 +247,7 @@ if ( defined $l && defined $a && $l =~ /^\d+$/ && $a =~ /^\d+$/)
 					}
 					else
 					{
-						$pass1 = &txt("X");
+						$pass1 = &txt("Ne circule pas");
 					}
 				}
 			}
