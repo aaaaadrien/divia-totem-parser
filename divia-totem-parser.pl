@@ -258,12 +258,12 @@ if ( defined $l && defined $a && $l =~ /^\d+$/ && $a =~ /^\d+$/)
 				$pass2 = &txt($tmp[3]);
 			}
 		}
-		print "$stop ($line $dest) : $pass1 - $pass2\n";
+		print "$stop ($line $dest) : $pass1 - $pass2";
 		
 	}
 	else
 	{
-		print "Erreur TOTEM : $response->status_line \n";
+		print "Erreur TOTEM : $response->status_line";
 	}
 	exit;
 }
